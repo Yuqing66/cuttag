@@ -2,6 +2,7 @@
 
 process fastqc {
     tag "${sample_id}"
+    label 'fastqc'
 
     publishDir "results/fastqc", mode: 'copy'
 

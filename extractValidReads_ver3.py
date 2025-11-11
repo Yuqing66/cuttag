@@ -1,12 +1,8 @@
-import sys
-import pysam
-import getopt
-import os.path
-from Bio.Seq import Seq
-import re
 import argparse
 import gzip
-import string
+import os.path
+
+import pysam
 
 ## NOTE: this may require python 2.7.5...
 
@@ -16,8 +12,12 @@ TM_LEN = 42 # antibody + adaptor length removed from 5' end.
 # Argument parsing:
 def get_args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-i', type=str, required=True, metavar='<R1 file>',
+	parser.add_argument('-r1', '-i', type=str, required=True, dest='r1', metavar='<R1 file>',
 						help='input R1 fastq file')
+	parser.add_argument('-index', '--index', type=str, required=True, dest='index', metavar='<Index file>',
+						help='input index (cell barcode) fastq file')
+	parser.add_argument('-r2', '--r2', type=str, required=True, dest='r2', metavar='<R2 file>',
+						help='input R2 fastq file')
 	parser.add_argument('-odir', type=str, required=True,
 						help='output folder path')
 	parser.add_argument('-b1', nargs='+', required=True,
@@ -92,7 +92,7 @@ def parseBarcodes(bc1, bc2, bc, bc1set, bc2set, bcset): # Need to add Cell barco
 
 	return (bc1, bc2, bc, bc1Valid, bc2Valid, bcValid, bc1Corr, bc2Corr, bcCorr)
 
-tab = string.maketrans("ACTG", "TGAC")
+tab = str.maketrans("ACTG", "TGAC")
 def reverse_complement(seq):
 	return seq.translate(tab)[::-1]
 
@@ -113,8 +113,8 @@ def run(args):
 		odir = os.path.dirname(R1file)  # if not provided, put the output file in the same directory as the input
 	bc1set = args.b1 # antibody barcodes in R1
 	bc2set = args.b2 # antibody barcodes in R2
-	bcfile = open(args.b, 'r')
-	bcset = bcfile.read().splitlines()
+	with open(args.b, 'r') as bcfile:
+		bcset = bcfile.read().splitlines()
 
 	# open the input file:
 	fq1 = pysam.FastqFile(R1file)
@@ -124,11 +124,11 @@ def run(args):
 	R3name = os.path.basename(R3file)
 	ofile_r1 = os.path.join(odir, R1name.replace('.fastq.gz','_valid.fastq.gz'))
 	ofile_r2 = os.path.join(odir, R3name.replace('.fastq.gz','_valid.fastq.gz'))
-	fq1out = gzip.open(ofile_r1,'wb')  # open outut file for read 1
-	fq2out = gzip.open(ofile_r2,'wb') # save read 2 'R3' to 'R2'.
+	fq1out = gzip.open(ofile_r1,'wt')  # open outut file for read 1
+	fq2out = gzip.open(ofile_r2,'wt') # save read 2 'R3' to 'R2'.
 	bc1outname = ofile_r1.replace('_valid.fastq.gz','_bc1.txt')
-	bc1out = open(bc1outname,'wb')
-	bc2out = open(bc1outname.replace('R1','R2').replace('bc1','bc2'),'wb')
+	bc1out = open(bc1outname,'w')
+	bc2out = open(bc1outname.replace('R1','R2').replace('bc1','bc2'),'w')
 
 	# counters:
 	nCount = 0 # total input reads number
@@ -141,11 +141,11 @@ def run(args):
 	nbcCorr = 0 # Corrected cell barcodes in R2
 
 	# loop over all reads:
-	while 1:
+	while True:
 		try:
-			r1 = fq1.next() # read 1 (P7 side)
-			r2 = fq2.next() # 10x cell barcode
-			r3 = fq3.next() # read 2 (P5 side)
+			r1 = next(fq1) # read 1 (P7 side)
+			r2 = next(fq2) # 10x cell barcode
+			r3 = next(fq3) # read 2 (P5 side)
 			nCount+=1 # read counter
 		except StopIteration:
 			break # last item
@@ -155,7 +155,7 @@ def run(args):
 		bc2 = r3.sequence[:AB_LEN]
 		bc = reverse_complement(r2.sequence)
 
-        # write the original barcode before correcting
+		# write the original barcode before correcting
 		bc1out.write('%s\n' % bc1)
 		bc2out.write('%s\n' % bc2)
 
@@ -188,22 +188,20 @@ def run(args):
 	bc2out.close()
 
 	# print counts:
-	print 'total input reads: %d' % nCount
-	print 'final valid reads: %d' % nValid
-	print 'valid antibody barcodes in R1: %d' % nbc1Valid
-	print 'valid antibody barcodes in R3: %d' % nbc2Valid
-	print 'valid cell barcodes in R2: %d' % nbcValid
-	print 'Corrected antiboty barcodes in R1: %d' % nbc1Corr
-	print 'Corrected antiboty barcodes in R3: %d' % nbc2Corr
-	print 'Corrected cell barcodes in R2: %d' % nbcCorr
+	print('total input reads: %d' % nCount)
+	print('final valid reads: %d' % nValid)
+	print('valid antibody barcodes in R1: %d' % nbc1Valid)
+	print('valid antibody barcodes in R3: %d' % nbc2Valid)
+	print('valid cell barcodes in R2: %d' % nbcValid)
+	print('Corrected antiboty barcodes in R1: %d' % nbc1Corr)
+	print('Corrected antiboty barcodes in R3: %d' % nbc2Corr)
+	print('Corrected cell barcodes in R2: %d' % nbcCorr)
 
 	return
 
 if __name__ == "__main__":
 	args = get_args()
 	run(args)
-
-
 
 
 

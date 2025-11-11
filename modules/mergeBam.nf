@@ -8,7 +8,6 @@ process mergeBam {
     memory params.merge_memory ?: '32 GB'
     time params.merge_time ?: '4h'
     queue params.merge_queue ?: 'short'
-    container params.merge_container ?: ''
 
     input:
     tuple val(sample_id), val(meta), path(bams)
@@ -21,13 +20,13 @@ process mergeBam {
     set -euo pipefail
 
     outdir="merge/${sample_id}"
-    mkdir -p ${outdir}
+    mkdir -p \${outdir}
 
-    merged_bam=${outdir}/${sample_id}.bam
-    sorted_bam=${outdir}/${sample_id}_sorted.bam
+    merged_bam=\${outdir}/${sample_id}.bam
+    sorted_bam=\${outdir}/${sample_id}_sorted.bam
 
-    samtools merge -f ${merged_bam} ${bams.collect { "'${it}'" }.join(' ')}
-    samtools sort -o ${sorted_bam} ${merged_bam}
-    samtools index ${sorted_bam}
+    samtools merge -f \${merged_bam} ${bams.collect { "'${it}'" }.join(' ')}
+    samtools sort -o \${sorted_bam} \${merged_bam}
+    samtools index \${sorted_bam}
     """
 }

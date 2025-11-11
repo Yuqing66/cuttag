@@ -8,7 +8,6 @@ process trimAdapters {
     memory params.trimAdapters_memory ?: '8 GB'
     time params.trimAdapters_time ?: '2h'
     queue params.trimAdapters_queue ?: 'short'
-    container params.trimAdapters_container ?: ''
 
     def adapter_r1 = params.adapter_r1 ?: 'CTGTCTCTTATACACATCTG'
     def adapter_r2 = params.adapter_r2 ?: 'CTGTCTCTTATACACATCTG'
@@ -24,15 +23,14 @@ process trimAdapters {
     """
     set -euo pipefail
 
-    outdir="cut/${sample_id}"
-    mkdir -p ${outdir}
+    mkdir -p cut/${sample_id}
 
     cutadapt \
         -a ${adapter_r1} \
         -A ${adapter_r2} \
         --minimum-length=${min_length} \
-        -o ${outdir}/${sample_id}_${chunk_id}_R1_cut.fastq.gz \
-        -p ${outdir}/${sample_id}_${chunk_id}_R2_cut.fastq.gz \
+        -o cut/${sample_id}/${sample_id}_${chunk_id}_R1_cut.fastq.gz \
+        -p cut/${sample_id}/${sample_id}_${chunk_id}_R2_cut.fastq.gz \
         ${r1} ${r2}
     """
 }
