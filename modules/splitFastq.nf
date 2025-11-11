@@ -24,18 +24,18 @@ process splitFastq {
     set -euo pipefail
 
     chunk_dir="split/${sample_id}"
-    mkdir -p ${chunk_dir}
+    mkdir -p "\${chunk_dir}"
 
     reads_per_chunk=${params.reads_per_chunk ?: 1000000}
-    lines_per_chunk=$(( reads_per_chunk * 4 ))
+    lines_per_chunk=\$(( reads_per_chunk * 4 ))
 
-    zcat ${r1} | split -d -l ${lines_per_chunk} --suffix-length=4 - ${chunk_dir}/${sample_id}_R1-
-    zcat ${i2} | split -d -l ${lines_per_chunk} --suffix-length=4 - ${chunk_dir}/${sample_id}_R2-
-    zcat ${r3} | split -d -l ${lines_per_chunk} --suffix-length=4 - ${chunk_dir}/${sample_id}_R3-
+    zcat ${r1} | split -d -l \${lines_per_chunk} --suffix-length=4 - \${chunk_dir}/${sample_id}_R1-
+    zcat ${i2} | split -d -l \${lines_per_chunk} --suffix-length=4 - \${chunk_dir}/${sample_id}_R2-
+    zcat ${r3} | split -d -l \${lines_per_chunk} --suffix-length=4 - \${chunk_dir}/${sample_id}_R3-
 
-    for fq in ${chunk_dir}/${sample_id}_R1-* ${chunk_dir}/${sample_id}_R2-* ${chunk_dir}/${sample_id}_R3-*; do
-        mv "${fq}" "${fq}.fastq"
-        pigz -p ${task.cpus} "${fq}.fastq"
+    for fq in \${chunk_dir}/${sample_id}_R1-* \${chunk_dir}/${sample_id}_R2-* \${chunk_dir}/${sample_id}_R3-*; do
+        mv "\${fq}" "\${fq}.fastq"
+        pigz -p ${task.cpus} "\${fq}.fastq"
     done
     """
 }
