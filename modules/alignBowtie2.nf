@@ -13,10 +13,10 @@ process alignBowtie2 {
     tuple val(sample_id), val(meta), val(chunk_id), path(r1), path(r2), path(bt2_index_dir), val(bt2_index_basename)
 
     output:
-    tuple val(sample_id), val(meta), val(chunk_id), path("align/${sample_id}/${sample_id}_${chunk_id}.bam"), path("align/${sample_id}/${sample_id}_${chunk_id}.bow")
+    tuple val(sample_id), val(meta), val(chunk_id), path("align/${sample_id}_${chunk_id}.bam"), path("align/${sample_id}_${chunk_id}.bow")
 
     script:
-    def align_dir = "align/${sample_id}"
+    def align_dir = "align"
     def base_name = "${sample_id}_${chunk_id}"
     def sam_path = "${align_dir}/${base_name}.sam"
     def bow_path = "${align_dir}/${base_name}.bow"

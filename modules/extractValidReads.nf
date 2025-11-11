@@ -13,13 +13,13 @@ process extractValidReads {
     tuple val(sample_id), val(meta), val(chunk_id), path(r1), path(i), path(r2), path(extract_script), path(cell_barcode_reference)
 
     output:
-    tuple val(sample_id), val(meta), val(chunk_id), path("valid/${sample_id}/${sample_id}_${chunk_id}_R1_valid.fastq.gz"), path("valid/${sample_id}/${sample_id}_${chunk_id}_R2_valid.fastq.gz")
+    tuple val(sample_id), val(meta), val(chunk_id), path("valid/${sample_id}_${chunk_id}_R1_valid.fastq.gz"), path("valid/${sample_id}_${chunk_id}_R2_valid.fastq.gz")
 
     script:
     """
     set -euo pipefail
 
-    outdir="valid/${sample_id}"
+    outdir="valid"
     mkdir -p \${outdir}
 
     input_basename_r1=\$(basename ${r1})

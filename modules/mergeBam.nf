@@ -13,16 +13,16 @@ process mergeBam {
     tuple val(sample_id), val(meta), path(bams)
 
     output:
-    tuple val(sample_id), val(meta), path("merge/${sample_id}/${sample_id}.bam"), path("merge/${sample_id}/${sample_id}_sorted.bam"), path("merge/${sample_id}/${sample_id}_sorted.bam.bai")
+    tuple val(sample_id), val(meta), path("merge/${sample_id}_merged.bam"), path("merge/${sample_id}_sorted.bam"), path("merge/${sample_id}_sorted.bam.bai")
 
     script:
     """
     set -euo pipefail
 
-    outdir="merge/${sample_id}"
+    outdir="merge"
     mkdir -p \${outdir}
 
-    merged_bam=\${outdir}/${sample_id}.bam
+    merged_bam=\${outdir}/${sample_id}_merged.bam
     sorted_bam=\${outdir}/${sample_id}_sorted.bam
 
     samtools merge -f \${merged_bam} ${bams.collect { "'${it}'" }.join(' ')}

@@ -13,14 +13,14 @@ process deduplicateFragments {
     tuple val(sample_id), val(meta), path(merged_bam), path(sorted_bam), path(sorted_bai), path(dedup_script)
 
     output:
-    tuple val(sample_id), val(meta), path("fragments/${sample_id}/${sample_id}_fragment_sorted.bam"), path("fragments/${sample_id}/${sample_id}_fragment_sorted.bam.bai"), path("dedup/${sample_id}/${sample_id}_fragment_freq.txt"), path("dedup/${sample_id}/${sample_id}_dedup.txt")
+    tuple val(sample_id), val(meta), path("fragments/${sample_id}_fragment_sorted.bam"), path("fragments/${sample_id}_fragment_sorted.bam.bai"), path("dedup/${sample_id}_fragment_freq.txt"), path("dedup/${sample_id}_dedup.txt"), path("dedup/${sample_id}_fragment_freq_*.txt"), path("dedup/${sample_id}_fragment_freqDedup.txt")
 
     script:
     """
     set -euo pipefail
 
-    fragment_dir="fragments/${sample_id}"
-    dedup_dir="dedup/${sample_id}"
+    fragment_dir="fragments"
+    dedup_dir="dedup"
     mkdir -p \${fragment_dir} \${dedup_dir}
 
     fragment_raw=\${fragment_dir}/${sample_id}_fragment.bam

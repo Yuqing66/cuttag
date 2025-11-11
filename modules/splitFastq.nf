@@ -16,13 +16,13 @@ process splitFastq {
     tuple val(sample_id), val(meta), path(r1), path(i2), path(r3)
 
     output:
-    tuple val(sample_id), val(meta), path("split/${sample_id}/${sample_id}_R1-*.fastq.gz"), path("split/${sample_id}/${sample_id}_R2-*.fastq.gz"), path("split/${sample_id}/${sample_id}_R3-*.fastq.gz")
+    tuple val(sample_id), val(meta), path("split/${sample_id}_R1-*.fastq.gz"), path("split/${sample_id}_R2-*.fastq.gz"), path("split/${sample_id}_R3-*.fastq.gz")
 
     script:
     """
     set -euo pipefail
 
-    chunk_dir="split/${sample_id}"
+    chunk_dir="split"
     mkdir -p "\${chunk_dir}"
 
     reads_per_chunk=${params.reads_per_chunk ?: 1000000}

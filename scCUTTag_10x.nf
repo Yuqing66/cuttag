@@ -12,6 +12,9 @@ params.antibody_sheet           = params.antibody_sheet           ?: 'input_anti
 def extract_script_path = file(params.extract_script)
 def cell_barcode_reference_path = file(params.cell_barcode_reference)
 def dedup_script_path = file(params.dedup_script)
+def chrom_size_path = file(params.chrom_size)
+def blacklist_bed_path = file(params.blacklist_bed)
+def control_bam_path = params.control_bam
 
 def antibody_meta = file(params.antibody_sheet)
   .splitCsv()                                        // returns a List of Lists
@@ -32,8 +35,11 @@ include { splitFastq }          from './modules/splitFastq.nf'
 include { extractValidReads }   from './modules/extractValidReads.nf'
 include { trimAdapters }        from './modules/trimAdapters.nf'
 include { alignBowtie2 }        from './modules/alignBowtie2.nf'
-include { mergeBam }            from './modules/mergeBam.nf'
+include { mergeBam }             from './modules/mergeBam.nf'
 include { deduplicateFragments } from './modules/deduplicate.nf'
+include { callAntibodyPeaks }    from './modules/callPeaks.nf'
+include { filterAntibodyPeaks }  from './modules/filterPeaks.nf'
+include { filterBlacklistPeaks } from './modules/filterBlacklist.nf'
 
 workflow scCUTTag_10x {
 
@@ -108,6 +114,49 @@ workflow scCUTTag_10x {
         .set { dedup_input }
 
     deduplicateFragments(dedup_input)
+
+    deduplicateFragments.out
+        .flatMap { sample_id, meta, fragment_sorted_bam, fragment_index, freq_file, dedup_report, antibody_tracks, dedup_track ->
+            def tracks = antibody_tracks instanceof List ? antibody_tracks : [antibody_tracks]
+            def freq_prefix = "${sample_id}_fragment_freq_"
+            def freq_diag = "${sample_id}_fragment_freq_freq.txt"
+            tracks
+                // Downstream steps only use antibody-specific _freq_{antibody}.txt files (drop the diagnostic _freq_dedup.txt).
+                .findAll { track ->
+                    def track_name = track?.name
+                    track_name &&
+                    track_name.startsWith(freq_prefix) &&
+                    track_name != freq_diag &&
+                    !track_name.endsWith('_dedup.txt')
+                }
+                .collect { track ->
+                    def antibody = track.name.substring(freq_prefix.length())
+                    antibody = antibody?.endsWith('.txt') ? antibody[0..-5] : antibody
+                    tuple(sample_id, meta, antibody, track)
+                }
+        }
+        .map { sample_id, meta, antibody, cutsite_file ->
+            tuple(sample_id, meta, antibody, cutsite_file, chrom_size_path, control_bam_path)
+        }
+        .set { call_peaks_input }
+
+    callAntibodyPeaks(call_peaks_input)
+
+    callAntibodyPeaks.out
+        .map { sample_id, meta, antibody, peaks_broad, cutsites_bed ->
+            tuple(sample_id, meta, antibody, peaks_broad, cutsites_bed, params.peak_cpbpmc ?: 2, params.peak_cutnum ?: 2, params.peak_merge_distance ?: 3000)
+        }
+        .set { peak_filter_input }
+
+    filterAntibodyPeaks(peak_filter_input)
+
+    filterAntibodyPeaks.out
+        .map { sample_id, meta, antibody, merged_bed ->
+            tuple(sample_id, meta, antibody, merged_bed, blacklist_bed_path)
+        }
+        .set { blacklist_filter_input }
+
+    filterBlacklistPeaks(blacklist_filter_input)
 }
 
 workflow {
