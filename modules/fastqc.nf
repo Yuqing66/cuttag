@@ -3,7 +3,6 @@
 process fastqc {
     tag "${sample_id}"
 
-    container ""
     publishDir "results/fastqc", mode: 'copy'
 
     input:

@@ -1,0 +1,7 @@
+work/
+results/
+data/
+.nextflow*
+.nxf/
+.conda/
+
