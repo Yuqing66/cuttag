@@ -8,6 +8,7 @@ params.adapter_r2               = params.adapter_r2               ?: 'CTGTCTCTTA
 params.adapter_min_length       = params.adapter_min_length       ?: 20
 params.fragment_min_mapq        = params.fragment_min_mapq        ?: 30
 params.antibody_sheet           = params.antibody_sheet           ?: 'input_antibody_barcode.csv'
+params.coverage_min_cut_sites   = params.coverage_min_cut_sites   ?: 50
 
 def extract_script_path = file(params.extract_script)
 def cell_barcode_reference_path = file(params.cell_barcode_reference)
@@ -40,6 +41,7 @@ include { deduplicateFragments } from './modules/deduplicate.nf'
 include { callAntibodyPeaks }    from './modules/callPeaks.nf'
 include { filterAntibodyPeaks }  from './modules/filterPeaks.nf'
 include { filterBlacklistPeaks } from './modules/filterBlacklist.nf'
+include { buildCoverageMatrix }  from './modules/buildCoverageMatrix.nf'
 
 workflow scCUTTag_10x {
 
@@ -135,10 +137,20 @@ workflow scCUTTag_10x {
                     tuple(sample_id, meta, antibody, track)
                 }
         }
+        .tap { antibody_cutsite_for_peaks}
+        .set { antibody_cutsite_for_matrix }
+
+    antibody_cutsite_for_peaks
         .map { sample_id, meta, antibody, cutsite_file ->
             tuple(sample_id, meta, antibody, cutsite_file, chrom_size_path, control_bam_path)
         }
         .set { call_peaks_input }
+
+    antibody_cutsite_for_matrix
+        .map { sample_id, meta, antibody, cutsite_file ->
+            tuple("${sample_id}:${antibody}", tuple(sample_id, meta, antibody, cutsite_file))
+        }
+        .set { coverage_cutsite_keyed }
 
     callAntibodyPeaks(call_peaks_input)
 
@@ -151,12 +163,26 @@ workflow scCUTTag_10x {
     filterAntibodyPeaks(peak_filter_input)
 
     filterAntibodyPeaks.out
-        .map { sample_id, meta, antibody, merged_bed ->
-            tuple(sample_id, meta, antibody, merged_bed, blacklist_bed_path)
+        .map { sample_id, meta, antibody, merge_distance, merged_bed ->
+            tuple(sample_id, meta, antibody, merge_distance, merged_bed, blacklist_bed_path)
         }
         .set { blacklist_filter_input }
 
     filterBlacklistPeaks(blacklist_filter_input)
+
+    filterBlacklistPeaks.out
+        .map { sample_id, meta, antibody, merge_distance, filtered_bed ->
+            tuple("${sample_id}:${antibody}", tuple(sample_id, meta, antibody, filtered_bed))
+        }
+        .join(coverage_cutsite_keyed)
+        .map { key, peak_data, cutsite_data ->
+            def (sample_id, meta, antibody, filtered_bed) = peak_data
+            def cutsite_file = cutsite_data[3]
+            tuple(sample_id, meta, antibody, filtered_bed, cutsite_file)
+        }
+        .set { coverage_matrix_input }
+
+    buildCoverageMatrix(coverage_matrix_input)
 }
 
 workflow {

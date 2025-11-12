@@ -12,14 +12,14 @@ process filterBlacklistPeaks {
     queue params.blacklist_peaks_queue ?: 'short'
 
     input:
-    tuple val(sample_id), val(meta), val(antibody), path(merged_bed), path(blacklist_bed)
+    tuple val(sample_id), val(meta), val(antibody), val(merge_distance), path(merged_bed), path(blacklist_bed)
 
     output:
-    tuple val(sample_id), val(meta), val(antibody), path("peaks/${sample_id}_${antibody}_filtered.bed")
+    tuple val(sample_id), val(meta), val(antibody), val(merge_distance), path("peaks/${sample_id}_${antibody}_m${merge_distance}_bl.bed")
 
     script:
     def peak_dir = "peaks"
-    def filtered_bed = "${peak_dir}/${sample_id}_${antibody}_filtered.bed"
+    def filtered_bed = "${peak_dir}/${sample_id}_${antibody}_m${merge_distance}_bl.bed"
     """
     set -euo pipefail
 

@@ -13,7 +13,7 @@ process filterAntibodyPeaks {
     tuple val(sample_id), val(meta), val(antibody), path(broad_peak), path(cutsites_bed), val(cpbpmc), val(cutnum), val(merge_distance)
 
     output:
-    tuple val(sample_id), val(meta), val(antibody), path("peaks/${sample_id}_${antibody}_m${merge_distance}.bed")
+    tuple val(sample_id), val(meta), val(antibody), val(merge_distance), path("peaks/${sample_id}_${antibody}_m${merge_distance}.bed")
 
     script:
     def peak_dir = "peaks"
