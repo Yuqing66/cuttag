@@ -1,0 +1,2 @@
+sample_id,fastq_r1,fastq_i,fastq_r2
+cuttag3,/Users/yuqing/projects/pipelines/scCUTTag/data/cuttag3_R1_10k.fastq.gz,/Users/yuqing/projects/pipelines/scCUTTag/data/cuttag3_R2_10k.fastq.gz,/Users/yuqing/projects/pipelines/scCUTTag/data/cuttag3_R3_10k.fastq.gz

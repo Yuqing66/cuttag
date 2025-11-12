@@ -7,7 +7,6 @@ This repository captures the manual multi-step single-cell CUT&Tag workflow in a
 Provide a CSV file (default `input_example.csv`) where **each row represents the fully merged FASTQ trio for one sample**. Required columns:
 
 | column      | description |
-|-------------|-------------|
 | `sample_id` | Logical sample name |
 | `fastq_r1`  | Path to the merged raw R1 FASTQ (read 1) |
 | `fastq_i`   | Path to the merged raw index FASTQ (10x cell barcode read, typically `R2`) |

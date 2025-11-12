@@ -1,23 +1,25 @@
+import sys
+import pysam
+import getopt
+import os.path
+from Bio.Seq import Seq
+import re
 import argparse
 import gzip
-import os.path
-
-import pysam
-
-## NOTE: this may require python 2.7.5...
 
 AB_LEN = 8 # antibody barcode length. At the beginning of the R1 & R2.
 TM_LEN = 42 # antibody + adaptor length removed from 5' end.
+COMPLEMENT_TRANS = str.maketrans("ACTG", "TGAC")
 
 # Argument parsing:
 def get_args():
 	parser = argparse.ArgumentParser()
-	parser.add_argument('-r1', '-i', type=str, required=True, dest='r1', metavar='<R1 file>',
+	parser.add_argument('-r1', type=str, required=True, metavar='<R1 file>',
 						help='input R1 fastq file')
-	parser.add_argument('-index', '--index', type=str, required=True, dest='index', metavar='<Index file>',
-						help='input index (cell barcode) fastq file')
-	parser.add_argument('-r2', '--r2', type=str, required=True, dest='r2', metavar='<R2 file>',
-						help='input R2 fastq file')
+	parser.add_argument('-index', type=str, required=True, metavar='<index read>',
+						help='Index read for cell barcode')
+	parser.add_argument('-r2', type=str, required=True, metavar='<R2 file>',
+						help='input R1 fastq file')
 	parser.add_argument('-odir', type=str, required=True,
 						help='output folder path')
 	parser.add_argument('-b1', nargs='+', required=True,
@@ -92,9 +94,8 @@ def parseBarcodes(bc1, bc2, bc, bc1set, bc2set, bcset): # Need to add Cell barco
 
 	return (bc1, bc2, bc, bc1Valid, bc2Valid, bcValid, bc1Corr, bc2Corr, bcCorr)
 
-tab = str.maketrans("ACTG", "TGAC")
 def reverse_complement(seq):
-	return seq.translate(tab)[::-1]
+	return seq.translate(COMPLEMENT_TRANS)[::-1]
 
 def fastqWrite(f, r, rName, lTrim):
 	# write each field of the read:
@@ -155,7 +156,7 @@ def run(args):
 		bc2 = r3.sequence[:AB_LEN]
 		bc = reverse_complement(r2.sequence)
 
-		# write the original barcode before correcting
+        # write the original barcode before correcting
 		bc1out.write('%s\n' % bc1)
 		bc2out.write('%s\n' % bc2)
 
@@ -202,7 +203,6 @@ def run(args):
 if __name__ == "__main__":
 	args = get_args()
 	run(args)
-
 
 
 

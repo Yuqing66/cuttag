@@ -1,0 +1,2 @@
+sample_id,fastq_r1,fastq_i,fastq_r2
+cuttag3,/home/yuqing.wang-umw/cuttag/nextflow_test/fastqs/cuttag3_R1.fastq.gz,/home/yuqing.wang-umw/cuttag/nextflow_test/fastqs/cuttag3_R2.fastq.gz,/home/yuqing.wang-umw/cuttag/nextflow_test/fastqs/cuttag3_R3.fastq.gz
